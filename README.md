@@ -43,7 +43,7 @@ npm run dev
 Seguindo a ordem da seção 13 da especificação:
 
 - [x] Semana 1–2 — Base (monorepo, schema, auth, CRUDs de organização)
-- [ ] Semana 3–4 — Criação de conteúdo
+- [x] Semana 3–4 — Criação de conteúdo (decks, stories, blocos, uploads, canvas editor, templates)
 - [ ] Semana 5–6 — Consumo de conteúdo
 - [ ] Semana 7–8 — SRS e Trilhas
 - [ ] Semana 9–10 — Aprovação com Pins

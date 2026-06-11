@@ -32,6 +32,92 @@ export interface KnowledgeArea {
   _count?: { decks: number }
 }
 
+// ─── Conteúdo ──────────────────────────────────────────────
+
+export interface TextBlockData {
+  content: unknown // TipTap JSON
+  isExample?: boolean
+}
+
+export interface ImageBlockData {
+  url: string | null
+  alt?: string
+  isExample?: boolean
+}
+
+export interface VoiceBlockData {
+  audioUrl: string | null
+  duration: number
+  transcript?: string
+  isExample?: boolean
+}
+
+export interface FlashcardBlockData {
+  front: string
+  back: string
+  frontImageUrl?: string | null
+  isExample?: boolean
+}
+
+export interface QuizBlockData {
+  question: string
+  options: string[]
+  correctIndex: number
+  explanation?: string
+  isExample?: boolean
+}
+
+export type BlockData =
+  | TextBlockData
+  | ImageBlockData
+  | VoiceBlockData
+  | FlashcardBlockData
+  | QuizBlockData
+
+export interface Block {
+  id: string
+  storyId: string
+  type: BlockType
+  order: number
+  data: BlockData
+}
+
+export interface Story {
+  id: string
+  deckId: string
+  order: number
+  blocks: Block[]
+}
+
+export interface Deck {
+  id: string
+  title: string
+  description: string | null
+  coverColor: string
+  status: DeckStatus
+  sectorId: string | null
+  knowledgeAreaId: string | null
+  createdById: string
+  rejectionNote: string | null
+  updatedAt: string
+  knowledgeArea?: Pick<KnowledgeArea, 'id' | 'name' | 'color'> | null
+  sector?: Pick<Sector, 'id' | 'name'> | null
+  createdBy?: { id: string; name: string; avatarUrl: string | null }
+  stories?: Story[]
+  _count?: { stories: number }
+}
+
+export interface Template {
+  id: string
+  name: string
+  description: string | null
+  source: 'PLATFORM' | 'ORGANIZATION'
+  structure: Array<{
+    order: number
+    blocks: Array<{ type: BlockType; order: number; data: Record<string, unknown> }>
+  }>
+}
+
 export interface User {
   id: string
   name: string

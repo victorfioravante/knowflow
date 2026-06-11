@@ -1,8 +1,12 @@
 // React Router v6 config
 import { Navigate, Outlet, createBrowserRouter } from 'react-router-dom'
+import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/hooks/useAuth'
 import InvitePage from '@/pages/auth/InvitePage'
 import LoginPage from '@/pages/auth/LoginPage'
+import CanvasEditorPage from '@/pages/creator/CanvasEditorPage'
+import MyDecksPage from '@/pages/creator/MyDecksPage'
+import TemplateGalleryPage from '@/pages/creator/TemplateGalleryPage'
 import HomePage from '@/pages/learner/HomePage'
 
 function ProtectedLayout() {
@@ -23,6 +27,18 @@ export const router = createBrowserRouter([
   { path: '/invite', element: <InvitePage /> },
   {
     element: <ProtectedLayout />,
-    children: [{ path: '/', element: <HomePage /> }],
+    children: [
+      // Telas com navegação inferior
+      {
+        element: <AppShell />,
+        children: [
+          { path: '/', element: <HomePage /> },
+          { path: '/decks', element: <MyDecksPage /> },
+        ],
+      },
+      // Telas de tela cheia (editor tem toolbar própria)
+      { path: '/decks/new', element: <TemplateGalleryPage /> },
+      { path: '/decks/:deckId/edit', element: <CanvasEditorPage /> },
+    ],
   },
 ])
