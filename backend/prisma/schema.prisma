@@ -1,0 +1,343 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ORGANIZAÇÃO ───────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  sectors           Sector[]
+  roles             Role[]
+  knowledgeAreas    KnowledgeArea[]
+  decks             Deck[]
+  trails            Trail[]
+  templates         Template[]
+  pushSubscriptions PushSubscription[]
+}
+
+model Sector {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  users  User[]
+  trails Trail[]
+  decks  Deck[]
+}
+
+model Role {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  users User[]
+}
+
+model KnowledgeArea {
+  id             String       @id @default(cuid())
+  name           String
+  color          String       @default("#1D9E75")
+  icon           String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  decks Deck[]
+}
+
+// ─── USUÁRIOS ──────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CONTRIBUTOR
+  LEARNER
+}
+
+model User {
+  id             String       @id @default(cuid())
+  supabaseId     String       @unique
+  name           String
+  email          String       @unique
+  avatarUrl      String?
+  role           UserRole     @default(LEARNER)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  sectorId       String?
+  sector         Sector?      @relation(fields: [sectorId], references: [id])
+  roleId         String?
+  jobRole        Role?        @relation(fields: [roleId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  createdDecks      Deck[]             @relation("DeckCreator")
+  approvedDecks     Deck[]             @relation("DeckApprover")
+  reviews           Review[]
+  trailProgress     TrailProgress[]
+  deckProgress      DeckProgress[]
+  pinComments       PinComment[]
+  pushSubscriptions PushSubscription[]
+}
+
+// ─── CONTEÚDO ──────────────────────────────────────────────
+
+enum DeckStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Deck {
+  id              String         @id @default(cuid())
+  title           String
+  description     String?
+  coverColor      String         @default("#1D9E75")
+  status          DeckStatus     @default(DRAFT)
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  sectorId        String?
+  sector          Sector?        @relation(fields: [sectorId], references: [id])
+  knowledgeAreaId String?
+  knowledgeArea   KnowledgeArea? @relation(fields: [knowledgeAreaId], references: [id])
+  createdById     String
+  createdBy       User           @relation("DeckCreator", fields: [createdById], references: [id])
+  approvedById    String?
+  approvedBy      User?          @relation("DeckApprover", fields: [approvedById], references: [id])
+  rejectionNote   String?
+  fromTemplateId  String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  stories      Story[]
+  assignments  Assignment[]
+  trailItems   TrailItem[]
+  deckProgress DeckProgress[]
+  pinComments  PinComment[]
+  savedAs      Template[]
+}
+
+// ─── STORIES ───────────────────────────────────────────────
+
+enum BlockType {
+  TEXT
+  IMAGE
+  VOICE
+  FLASHCARD
+  QUIZ
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  deckId    String
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks      Block[]
+  pinComments PinComment[]
+}
+
+model Block {
+  id      String    @id @default(cuid())
+  storyId String
+  story   Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  type    BlockType
+  order   Int
+  data    Json
+  // data por tipo:
+  // TEXT:      { content: string (TipTap JSON) }
+  // IMAGE:     { url: string, alt?: string }
+  // VOICE:     { audioUrl: string, duration: number, transcript?: string }
+  // FLASHCARD: { front: string, back: string, frontImageUrl?: string }
+  // QUIZ:      { question: string, options: string[], correctIndex: number, explanation?: string }
+  createdAt DateTime @default(now())
+
+  reviews Review[]
+}
+
+// ─── SRS (FSRS) ────────────────────────────────────────────
+
+enum ReviewRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  blockId     String
+  block       Block        @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  rating      ReviewRating
+  reviewedAt  DateTime     @default(now())
+  scheduledAt DateTime
+
+  // Dados internos do FSRS
+  stability  Float @default(0)
+  difficulty Float @default(0)
+  elapsed    Int   @default(0)
+  scheduled  Int   @default(0)
+  reps       Int   @default(0)
+  lapses     Int   @default(0)
+  state      Int   @default(0)
+
+  @@unique([userId, blockId])
+}
+
+// ─── APROVAÇÃO COM PINS ────────────────────────────────────
+
+model PinComment {
+  id       String @id @default(cuid())
+  deckId   String
+  deck     Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  storyId  String
+  story    Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  // Posição do pin em porcentagem (0-100) relativa à story
+  xPercent  Float
+  yPercent  Float
+  comment   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─── TRILHAS ───────────────────────────────────────────────
+
+model Trail {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?
+  coverColor     String       @default("#1D9E75")
+  isOnboarding   Boolean      @default(false)
+  sequential     Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  sectorId       String?
+  sector         Sector?      @relation(fields: [sectorId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  items       TrailItem[]
+  assignments Assignment[]
+  progress    TrailProgress[]
+}
+
+model TrailItem {
+  id       String  @id @default(cuid())
+  trailId  String
+  trail    Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  deckId   String
+  deck     Deck    @relation(fields: [deckId], references: [id])
+  order    Int
+  required Boolean @default(true)
+}
+
+// ─── ATRIBUIÇÕES ───────────────────────────────────────────
+
+enum AssignmentTargetType {
+  USER
+  SECTOR
+  ORGANIZATION
+}
+
+model Assignment {
+  id         String               @id @default(cuid())
+  deckId     String?
+  deck       Deck?                @relation(fields: [deckId], references: [id])
+  trailId    String?
+  trail      Trail?               @relation(fields: [trailId], references: [id])
+  targetType AssignmentTargetType
+  targetId   String
+  dueDate    DateTime?
+  createdAt  DateTime             @default(now())
+}
+
+// ─── PROGRESSO ─────────────────────────────────────────────
+
+model DeckProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  deckId      String
+  deck        Deck      @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  completedAt DateTime?
+  score       Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, deckId])
+}
+
+model TrailProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  trailId     String
+  trail       Trail     @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, trailId])
+}
+
+// ─── TEMPLATES ─────────────────────────────────────────────
+
+enum TemplateSource {
+  PLATFORM
+  ORGANIZATION
+}
+
+model Template {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  source         TemplateSource
+  organizationId String?
+  organization   Organization?  @relation(fields: [organizationId], references: [id])
+  fromDeckId     String?
+  fromDeck       Deck?          @relation(fields: [fromDeckId], references: [id])
+
+  // Estrutura de blocos de exemplo serializada em JSON
+  structure Json
+  // structure: Array de stories, cada story com array de blocks com dados de exemplo
+  createdAt DateTime @default(now())
+}
+
+// ─── NOTIFICAÇÕES PUSH ─────────────────────────────────────
+
+model PushSubscription {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  endpoint       String       @unique
+  p256dh         String
+  auth           String
+  createdAt      DateTime     @default(now())
+}
