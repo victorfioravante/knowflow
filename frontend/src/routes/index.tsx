@@ -8,6 +8,7 @@ import CanvasEditorPage from '@/pages/creator/CanvasEditorPage'
 import MyDecksPage from '@/pages/creator/MyDecksPage'
 import TemplateGalleryPage from '@/pages/creator/TemplateGalleryPage'
 import HomePage from '@/pages/learner/HomePage'
+import StoryPlayerPage from '@/pages/learner/StoryPlayerPage'
 
 function ProtectedLayout() {
   const { status } = useAuth()
@@ -36,9 +37,10 @@ export const router = createBrowserRouter([
           { path: '/decks', element: <MyDecksPage /> },
         ],
       },
-      // Telas de tela cheia (editor tem toolbar própria)
+      // Telas de tela cheia (editor e player têm toolbar própria)
       { path: '/decks/new', element: <TemplateGalleryPage /> },
       { path: '/decks/:deckId/edit', element: <CanvasEditorPage /> },
+      { path: '/decks/:deckId/play', element: <StoryPlayerPage /> },
     ],
   },
 ])

@@ -46,3 +46,16 @@ export async function updateDeck(id: string, input: Partial<Parameters<typeof cr
 export async function deleteDeck(id: string) {
   await api.delete(`/decks/${id}`)
 }
+
+export async function listAssignedDecks() {
+  const { data } = await api.get<Deck[]>('/decks/assigned')
+  return data
+}
+
+export async function completeDeck(id: string) {
+  await api.post(`/progress/deck/${id}/complete`)
+}
+
+export async function saveDeckQuizScore(id: string, score: number) {
+  await api.post(`/progress/deck/${id}/quiz-score`, { score })
+}

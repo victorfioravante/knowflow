@@ -1,4 +1,4 @@
-import { Deck, DeckStatus, User, UserRole } from '@prisma/client'
+import { AssignmentTargetType, Deck, DeckStatus, User, UserRole } from '@prisma/client'
 import { Request, Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
@@ -176,4 +176,62 @@ export async function deleteDeck(req: Request, res: Response) {
 
   await prisma.deck.delete({ where: { id: deck.id } })
   res.status(204).end()
+}
+
+// GET /api/decks/assigned — decks aprovados visíveis ao usuário, com progresso
+export async function listAssignedDecks(req: Request, res: Response) {
+  const userId = req.user.id
+  const organizationId = req.organization.id
+  const sectorId = req.user.sectorId
+
+  // Verifica se existem assignments explícitos para este usuário/setor/org
+  const assignmentCount = await prisma.assignment.count({
+    where: {
+      deckId: { not: null },
+      OR: [
+        { targetType: AssignmentTargetType.USER, targetId: userId },
+        ...(sectorId ? [{ targetType: AssignmentTargetType.SECTOR, targetId: sectorId }] : []),
+        { targetType: AssignmentTargetType.ORGANIZATION, targetId: organizationId },
+      ],
+    },
+  })
+
+  let decksList
+  if (assignmentCount === 0) {
+    // Sem assignments: mostra todos os decks aprovados da org (comportamento padrão demo)
+    decksList = await prisma.deck.findMany({
+      where: { organizationId, status: DeckStatus.APPROVED },
+      orderBy: { updatedAt: 'desc' },
+      include: deckListInclude,
+    })
+  } else {
+    const assignments = await prisma.assignment.findMany({
+      where: {
+        deckId: { not: null },
+        deck: { is: { organizationId, status: DeckStatus.APPROVED } },
+        OR: [
+          { targetType: AssignmentTargetType.USER, targetId: userId },
+          ...(sectorId ? [{ targetType: AssignmentTargetType.SECTOR, targetId: sectorId }] : []),
+          { targetType: AssignmentTargetType.ORGANIZATION, targetId: organizationId },
+        ],
+      },
+      include: { deck: { include: deckListInclude } },
+    })
+    const seen = new Set<string>()
+    decksList = assignments
+      .map((a) => a.deck)
+      .filter((d): d is NonNullable<typeof d> => {
+        if (!d || seen.has(d.id)) return false
+        seen.add(d.id)
+        return true
+      })
+  }
+
+  const deckIds = decksList.map((d) => d.id)
+  const progresses = await prisma.deckProgress.findMany({
+    where: { userId, deckId: { in: deckIds } },
+  })
+  const progressMap = new Map(progresses.map((p) => [p.deckId, p]))
+
+  res.json(decksList.map((d) => ({ ...d, progress: progressMap.get(d.id) ?? null })))
 }

@@ -11,6 +11,7 @@ const CREATOR_ROLES = [UserRole.ADMIN, UserRole.MANAGER, UserRole.CONTRIBUTOR] a
 
 router.get('/', decks.listDecks)
 router.get('/my', decks.listMyDecks)
+router.get('/assigned', decks.listAssignedDecks)
 router.post(
   '/',
   requireRole(...CREATOR_ROLES),

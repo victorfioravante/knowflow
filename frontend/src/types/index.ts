@@ -105,6 +105,15 @@ export interface Deck {
   createdBy?: { id: string; name: string; avatarUrl: string | null }
   stories?: Story[]
   _count?: { stories: number }
+  progress?: DeckProgress | null
+}
+
+export interface DeckProgress {
+  id: string
+  userId: string
+  deckId: string
+  completedAt: string | null
+  score: number | null
 }
 
 export interface Template {
