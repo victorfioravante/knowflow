@@ -25,6 +25,18 @@ router.post(
   decks.createFromTemplate,
 )
 router.get('/:id', decks.getDeck)
+router.post('/:id/submit', decks.submitDeck)
+router.post(
+  '/:id/approve',
+  requireRole(UserRole.ADMIN, UserRole.MANAGER),
+  decks.approveDeck,
+)
+router.post(
+  '/:id/reject',
+  requireRole(UserRole.ADMIN, UserRole.MANAGER),
+  validate(decks.rejectDeckSchema),
+  decks.rejectDeck,
+)
 router.patch('/:id', validate(decks.updateDeckSchema), decks.updateDeck)
 router.delete('/:id', decks.deleteDeck)
 

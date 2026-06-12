@@ -47,6 +47,21 @@ export async function deleteDeck(id: string) {
   await api.delete(`/decks/${id}`)
 }
 
+export async function submitDeck(id: string) {
+  const { data } = await api.post<Deck>(`/decks/${id}/submit`)
+  return data
+}
+
+export async function approveDeck(id: string) {
+  const { data } = await api.post<Deck>(`/decks/${id}/approve`)
+  return data
+}
+
+export async function rejectDeck(id: string, note: string) {
+  const { data } = await api.post<Deck>(`/decks/${id}/reject`, { note })
+  return data
+}
+
 export async function listAssignedDecks() {
   const { data } = await api.get<Deck[]>('/decks/assigned')
   return data

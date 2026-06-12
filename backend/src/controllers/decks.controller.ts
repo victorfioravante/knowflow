@@ -18,6 +18,10 @@ export const fromTemplateSchema = z.object({
   title: z.string().min(1).max(160).optional(),
 })
 
+export const rejectDeckSchema = z.object({
+  note: z.string().min(1).max(500),
+})
+
 const deckListInclude = {
   knowledgeArea: { select: { id: true, name: true, color: true } },
   sector: { select: { id: true, name: true } },
@@ -176,6 +180,61 @@ export async function deleteDeck(req: Request, res: Response) {
 
   await prisma.deck.delete({ where: { id: deck.id } })
   res.status(204).end()
+}
+
+// POST /api/decks/:id/submit — submete para aprovação (DRAFT/REJECTED → PENDING)
+export async function submitDeck(req: Request, res: Response) {
+  const deck = await findOrgDeck(req.params.id, req.organization.id)
+  if (!deck) return res.status(404).json({ error: 'Deck não encontrado' })
+
+  const permission = canEditDeck(req.user, deck)
+  if (!permission.ok) return res.status(403).json({ error: permission.error })
+
+  // Deck precisa ter ao menos um bloco de conteúdo
+  const blockCount = await prisma.block.count({ where: { story: { deckId: deck.id } } })
+  if (blockCount === 0) {
+    return res.status(400).json({ error: 'Adicione conteúdo antes de enviar para aprovação' })
+  }
+
+  const updated = await prisma.deck.update({
+    where: { id: deck.id },
+    data: { status: DeckStatus.PENDING, rejectionNote: null },
+    include: deckListInclude,
+  })
+  res.json(updated)
+}
+
+// POST /api/decks/:id/approve — aprova deck (MANAGER|ADMIN)
+export async function approveDeck(req: Request, res: Response) {
+  const deck = await findOrgDeck(req.params.id, req.organization.id)
+  if (!deck) return res.status(404).json({ error: 'Deck não encontrado' })
+  if (deck.status !== DeckStatus.PENDING) {
+    return res.status(400).json({ error: 'Apenas decks pendentes podem ser aprovados' })
+  }
+
+  const updated = await prisma.deck.update({
+    where: { id: deck.id },
+    data: { status: DeckStatus.APPROVED, approvedById: req.user.id, rejectionNote: null },
+    include: deckListInclude,
+  })
+  res.json(updated)
+}
+
+// POST /api/decks/:id/reject — rejeita deck com nota (MANAGER|ADMIN)
+export async function rejectDeck(req: Request, res: Response) {
+  const { note } = req.body as z.infer<typeof rejectDeckSchema>
+  const deck = await findOrgDeck(req.params.id, req.organization.id)
+  if (!deck) return res.status(404).json({ error: 'Deck não encontrado' })
+  if (deck.status !== DeckStatus.PENDING) {
+    return res.status(400).json({ error: 'Apenas decks pendentes podem ser rejeitados' })
+  }
+
+  const updated = await prisma.deck.update({
+    where: { id: deck.id },
+    data: { status: DeckStatus.REJECTED, rejectionNote: note },
+    include: deckListInclude,
+  })
+  res.json(updated)
 }
 
 // GET /api/decks/assigned — decks aprovados visíveis ao usuário, com progresso
