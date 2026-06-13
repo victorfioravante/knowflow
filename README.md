@@ -6,7 +6,7 @@ PWA de aprendizado peer-to-peer para times corporativos. Colaboradores criam con
 
 **Problema real:** onboarding e transferência de conhecimento em empresas dependem de documentos estáticos que ninguém lê e treinamentos sincrônicos que não escalam. O Knowflow transforma especialistas internos em criadores de conteúdo assíncrono com um fluxo editorial completo.
 
-> **Demo:** [knowflow.up.railway.app](https://knowflow.up.railway.app) · credenciais de acesso: `demo@knowflow.app / demo1234`
+> **Demo:** [knowflow.up.railway.app](https://knowflow.up.railway.app) — botão **"Entrar como demonstração"** na tela de login dá acesso ao conteúdo de exemplo sem cadastro.
 
 ---
 
@@ -80,6 +80,16 @@ npm run dev            # porta 5173
 ```bash
 npm test --workspace=backend   # prisma generate + 19 testes unitários
 ```
+
+### Habilitando a demo pública
+
+A demo "navegável sem cadastro" usa uma conta pré-provisionada:
+
+1. Crie a conta `demo@knowflow.app` no Supabase Auth e copie o `User UID`.
+2. **Backend:** defina `DEMO_USER_SUPABASE_ID=<uid>` e rode `npx prisma db seed` — provisiona o usuário demo (ADMIN) e os decks de exemplo.
+3. **Frontend:** defina `VITE_DEMO_EMAIL` e `VITE_DEMO_PASSWORD` — o botão "Entrar como demonstração" aparece na tela de login.
+
+Sem essas variáveis o app funciona normalmente; apenas o atalho de demo fica oculto.
 
 ---
 
