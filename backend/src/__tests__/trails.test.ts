@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 // Prevent PrismaClient instantiation — these tests exercise pure logic only
 vi.mock('../lib/prisma', () => ({ prisma: {} }))
 
-import { computeTrailProgress } from '../controllers/trails.controller'
+import { computeTrailProgress, normalizeTrailItems } from '../controllers/trails.controller'
 import type { TrailItemProgressInput } from '../controllers/trails.controller'
 
 const item = (deckId: string, order: number, required = true): TrailItemProgressInput => ({
@@ -65,5 +65,43 @@ describe('computeTrailProgress', () => {
     const items = [item('a', 0), item('b', 1), item('c', 2)]
     const result = computeTrailProgress(items, new Set(['a', 'b']))
     expect(result.percent).toBe(67) // 2/3 = 66.66... → 67
+  })
+})
+
+describe('normalizeTrailItems', () => {
+  it('assigns sequential order by list position', () => {
+    const result = normalizeTrailItems([{ deckId: 'x' }, { deckId: 'y' }, { deckId: 'z' }])
+    expect(result).toEqual([
+      { deckId: 'x', order: 0, required: true },
+      { deckId: 'y', order: 1, required: true },
+      { deckId: 'z', order: 2, required: true },
+    ])
+  })
+
+  it('defaults required to true and respects an explicit false', () => {
+    const result = normalizeTrailItems([{ deckId: 'x', required: false }, { deckId: 'y' }])
+    expect(result[0].required).toBe(false)
+    expect(result[1].required).toBe(true)
+  })
+
+  it('drops duplicate decks keeping the first occurrence', () => {
+    const result = normalizeTrailItems([
+      { deckId: 'x' },
+      { deckId: 'y' },
+      { deckId: 'x', required: false }, // duplicata ignorada
+    ])
+    expect(result).toEqual([
+      { deckId: 'x', order: 0, required: true },
+      { deckId: 'y', order: 1, required: true },
+    ])
+  })
+
+  it('returns an empty list for no items', () => {
+    expect(normalizeTrailItems([])).toEqual([])
+  })
+
+  it('reindexes order contiguously after dropping duplicates', () => {
+    const result = normalizeTrailItems([{ deckId: 'a' }, { deckId: 'a' }, { deckId: 'b' }])
+    expect(result.map((i) => i.order)).toEqual([0, 1])
   })
 })

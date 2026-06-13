@@ -151,6 +151,17 @@ export interface Trail {
   progress?: TrailProgressSummary
 }
 
+export type AssignmentTargetType = 'USER' | 'SECTOR' | 'ORGANIZATION'
+
+export interface Assignment {
+  id: string
+  trailId: string | null
+  deckId: string | null
+  targetType: AssignmentTargetType
+  targetId: string
+  dueDate: string | null
+}
+
 export interface Template {
   id: string
   name: string

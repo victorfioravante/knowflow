@@ -5,8 +5,10 @@ import { useAuth } from '@/hooks/useAuth'
 import InvitePage from '@/pages/auth/InvitePage'
 import LoginPage from '@/pages/auth/LoginPage'
 import CanvasEditorPage from '@/pages/creator/CanvasEditorPage'
+import ManageTrailsPage from '@/pages/creator/ManageTrailsPage'
 import MyDecksPage from '@/pages/creator/MyDecksPage'
 import TemplateGalleryPage from '@/pages/creator/TemplateGalleryPage'
+import TrailEditorPage from '@/pages/creator/TrailEditorPage'
 import HomePage from '@/pages/learner/HomePage'
 import StoryPlayerPage from '@/pages/learner/StoryPlayerPage'
 import TrailsPage from '@/pages/learner/TrailsPage'
@@ -38,6 +40,9 @@ export const router = createBrowserRouter([
           { path: '/', element: <HomePage /> },
           { path: '/trails', element: <TrailsPage /> },
           { path: '/trails/:trailId', element: <TrailDetailPage /> },
+          { path: '/manage/trails', element: <ManageTrailsPage /> },
+          { path: '/manage/trails/new', element: <TrailEditorPage /> },
+          { path: '/manage/trails/:trailId', element: <TrailEditorPage /> },
           { path: '/decks', element: <MyDecksPage /> },
         ],
       },

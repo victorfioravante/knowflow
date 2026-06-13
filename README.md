@@ -50,7 +50,7 @@ Decisões de arquitetura documentadas em [`DECISIONS.md`](./DECISIONS.md).
 - **Story Player** — reprodução sequencial com suporte a todos os tipos de bloco; integração com FSRS para scheduling de revisões
 - **Templates** — galeria de templates de plataforma e por organização; criação de deck a partir de template
 - **Uploads** — imagens (max 5 MB) e áudio (max 25 MB) via Supabase Storage
-- **Trilhas de onboarding** — sequências guiadas de decks com progresso computado, desbloqueio sequencial (cada passo libera o próximo) e visão de stepper para o aprendiz
+- **Trilhas de onboarding** — sequências guiadas de decks com progresso computado, desbloqueio sequencial (cada passo libera o próximo) e visão de stepper para o aprendiz; managers criam, editam, ordenam decks e atribuem a trilha à organização ou a um setor
 
 ---
 

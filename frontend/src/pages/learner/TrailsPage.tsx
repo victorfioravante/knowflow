@@ -1,10 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
 import { listTrails } from '@/services/trails'
 import type { Trail } from '@/types'
 
 export default function TrailsPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
   const { data: trails = [], isLoading } = useQuery({
     queryKey: ['trails'],
@@ -13,9 +16,16 @@ export default function TrailsPage() {
 
   return (
     <div className="min-h-full px-4 py-6">
-      <header className="mb-6">
-        <h1 className="text-xl font-bold">Trilhas</h1>
-        <p className="text-sm text-gray-500">Sequências guiadas de aprendizado</p>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">Trilhas</h1>
+          <p className="text-sm text-gray-500">Sequências guiadas de aprendizado</p>
+        </div>
+        {canManage && (
+          <Link to="/manage/trails" className="text-sm font-medium text-primary">
+            Gerenciar
+          </Link>
+        )}
       </header>
 
       {isLoading ? (
