@@ -35,12 +35,27 @@ const quizData = z
     message: 'correctIndex fora do intervalo de opções',
   })
 
-const DATA_SCHEMA_BY_TYPE: Record<BlockType, z.ZodTypeAny> = {
+export const DATA_SCHEMA_BY_TYPE: Record<BlockType, z.ZodTypeAny> = {
   TEXT: textData,
   IMAGE: imageData,
   VOICE: voiceData,
   FLASHCARD: flashcardData,
   QUIZ: quizData,
+}
+
+/**
+ * Valida e normaliza os dados de um bloco conforme seu tipo (lógica pura, sem Express).
+ * Remove o marcador `isExample` deixado por templates quando o bloco é editado.
+ */
+export function parseBlockData(
+  type: BlockType,
+  data: unknown,
+): { ok: true; data: Record<string, unknown> } | { ok: false; error: z.ZodError } {
+  const result = DATA_SCHEMA_BY_TYPE[type].safeParse(data)
+  if (!result.success) return { ok: false, error: result.error }
+  const parsed = result.data as Record<string, unknown>
+  delete parsed.isExample
+  return { ok: true, data: parsed }
 }
 
 /** Dados iniciais de um bloco recém-criado pela toolbar. */
@@ -87,18 +102,15 @@ async function loadEditableStory(req: Request, res: Response) {
 }
 
 function validateBlockData(type: BlockType, data: unknown, res: Response) {
-  const result = DATA_SCHEMA_BY_TYPE[type].safeParse(data)
-  if (!result.success) {
+  const result = parseBlockData(type, data)
+  if (!result.ok) {
     res.status(400).json({
       error: 'Dados do bloco inválidos',
       details: result.error.flatten(),
     })
     return null
   }
-  // O campo isExample deve ser removido quando o usuário edita o bloco
-  const parsed = result.data as Record<string, unknown>
-  delete parsed.isExample
-  return parsed
+  return result.data
 }
 
 // GET /api/stories/:storyId/blocks
