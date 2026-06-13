@@ -10,6 +10,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const demoEmail = import.meta.env.VITE_DEMO_EMAIL
+  const demoPassword = import.meta.env.VITE_DEMO_PASSWORD
+  const demoEnabled = Boolean(demoEmail && demoPassword)
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -19,6 +23,20 @@ export default function LoginPage() {
       navigate('/')
     } catch {
       setError('Email ou senha inválidos')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDemoLogin() {
+    if (!demoEmail || !demoPassword) return
+    setError(null)
+    setSubmitting(true)
+    try {
+      await signIn(demoEmail, demoPassword)
+      navigate('/')
+    } catch {
+      setError('Não foi possível entrar na conta de demonstração')
     } finally {
       setSubmitting(false)
     }
@@ -73,6 +91,31 @@ export default function LoginPage() {
             {submitting ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        {demoEnabled && (
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white px-2 text-gray-400">ou</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={submitting}
+              className="mt-6 w-full rounded-lg border border-primary px-4 py-3 text-base font-semibold text-primary disabled:opacity-60"
+            >
+              Entrar como demonstração
+            </button>
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Acesso de leitura ao conteúdo de exemplo, sem cadastro.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

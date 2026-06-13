@@ -1,5 +1,5 @@
 // prisma/seed.ts — Templates da plataforma + organização demo + conteúdo demo
-import { BlockType, DeckStatus, PrismaClient, TemplateSource } from '@prisma/client'
+import { BlockType, DeckStatus, PrismaClient, TemplateSource, UserRole } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -205,7 +205,36 @@ async function main() {
   })
   console.log(`Organização demo: ${demoOrg.slug} (${demoOrg.id})`)
 
+  await ensureDemoUser(demoOrg.id)
   await seedDemoDecks(demoOrg.id)
+}
+
+/**
+ * Provisiona o usuário de demonstração caso DEMO_USER_SUPABASE_ID esteja definido.
+ * O ID é o que o Supabase atribui à conta demo (ex.: demo@knowflow.app) — assim a
+ * demo pública fica navegável sem depender de um login prévio para popular o banco.
+ * É ADMIN para que o tour mostre criação, aprovação e consumo de conteúdo.
+ */
+async function ensureDemoUser(organizationId: string) {
+  const supabaseId = process.env.DEMO_USER_SUPABASE_ID
+  if (!supabaseId) {
+    console.log('DEMO_USER_SUPABASE_ID não definido — usuário demo não provisionado')
+    return
+  }
+
+  const email = process.env.DEMO_USER_EMAIL ?? 'demo@knowflow.app'
+  await prisma.user.upsert({
+    where: { supabaseId },
+    update: { organizationId },
+    create: {
+      supabaseId,
+      email,
+      name: 'Visitante Demo',
+      role: UserRole.ADMIN,
+      organizationId,
+    },
+  })
+  console.log(`Usuário demo provisionado: ${email}`)
 }
 
 // ─── Decks demo (conteúdo aprovado para visualização) ──────
