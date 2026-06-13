@@ -9,6 +9,7 @@ import rolesRoutes from './roles.routes'
 import sectorsRoutes from './sectors.routes'
 import progressRoutes from './progress.routes'
 import templatesRoutes from './templates.routes'
+import trailsRoutes from './trails.routes'
 import uploadsRoutes from './uploads.routes'
 import usersRoutes from './users.routes'
 
@@ -26,6 +27,7 @@ router.use('/users', authMiddleware, usersRoutes)
 router.use('/decks', authMiddleware, decksRoutes)
 router.use('/stories/:storyId/blocks', authMiddleware, blocksRoutes)
 router.use('/templates', authMiddleware, templatesRoutes)
+router.use('/trails', authMiddleware, trailsRoutes)
 router.use('/uploads', authMiddleware, uploadsRoutes)
 router.use('/progress', authMiddleware, progressRoutes)
 

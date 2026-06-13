@@ -108,3 +108,17 @@ Registro das principais decisões tomadas durante o desenvolvimento do Knowflow.
 **Escolha:** B — workflow com estados explícitos.
 
 **Por quê:** A opção A não escala para conteúdo corporativo — sem revisão, o sinal de qualidade se perde rapidamente. A opção C cria gargalo e latência. O workflow B mapeia exatamente o processo real de times de L&D: criador finaliza e submete, manager revisa, aprova ou rejeita com nota de melhoria. A nota de rejeição é obrigatória (`min(1)`) — rejeitar sem feedback não é permitido pelo sistema. Isso cria um loop de melhoria rastreável: o criador vê o motivo, revisa o deck (agora em REJECTED), e resubmete.
+
+---
+
+## 8. Progresso de trilha computado sob demanda (não persistido)
+
+**Contexto:** Uma trilha de onboarding agrega vários decks em sequência. Cada deck já tem seu próprio `DeckProgress` (concluído / score). Era preciso decidir como representar "quanto da trilha o usuário completou".
+
+**Opções:**
+- A) Persistir um `TrailProgress` denormalizado (percentual, próximo passo) e atualizá-lo a cada deck concluído
+- B) Computar o progresso da trilha sob demanda a partir dos `DeckProgress` existentes
+
+**Escolha:** B — computar sob demanda via `computeTrailProgress`.
+
+**Por quê:** A fonte de verdade do progresso já é o `DeckProgress`. Persistir um agregado em `TrailProgress` criaria uma segunda fonte que pode divergir — por exemplo, se um deck for removido da trilha ou reordenado, o agregado fica desatualizado e exige invalidação manual. Computar sob demanda é sempre consistente, e o custo é trivial: uma query dos decks concluídos do usuário + uma redução em memória. Extraí a lógica como função pura `computeTrailProgress(items, completedDeckIds)` — sem dependência do Express ou do Prisma — o que a torna testável isoladamente (ordem dos passos, próximo passo, conclusão considerando itens opcionais). O desbloqueio sequencial (cada passo libera o próximo) é derivado da mesma base. O model `TrailProgress` permanece no schema para um eventual registro de "trilha finalizada com data", mas o percentual nunca é duplicado.

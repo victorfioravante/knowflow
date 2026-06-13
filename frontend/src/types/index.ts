@@ -116,6 +116,41 @@ export interface DeckProgress {
   score: number | null
 }
 
+// ─── Trilhas ───────────────────────────────────────────────
+
+export interface TrailProgressSummary {
+  total: number
+  completed: number
+  percent: number
+  nextDeckId: string | null
+  isComplete: boolean
+}
+
+export interface TrailItem {
+  id: string
+  trailId: string
+  deckId: string
+  order: number
+  required: boolean
+  completed?: boolean
+  unlocked?: boolean
+  deck?: Pick<Deck, 'id' | 'title' | 'description' | 'coverColor' | 'status' | 'knowledgeArea' | '_count'>
+}
+
+export interface Trail {
+  id: string
+  title: string
+  description: string | null
+  coverColor: string
+  isOnboarding: boolean
+  sequential: boolean
+  sectorId: string | null
+  sector?: Pick<Sector, 'id' | 'name'> | null
+  itemCount?: number
+  items?: TrailItem[]
+  progress?: TrailProgressSummary
+}
+
 export interface Template {
   id: string
   name: string

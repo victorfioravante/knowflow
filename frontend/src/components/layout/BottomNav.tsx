@@ -18,6 +18,10 @@ export default function BottomNav() {
           <span className="text-lg leading-none">🏠</span>
           Início
         </NavLink>
+        <NavLink to="/trails" className={linkClasses}>
+          <span className="text-lg leading-none">🧭</span>
+          Trilhas
+        </NavLink>
         {canCreate && (
           <NavLink to="/decks" className={linkClasses}>
             <span className="text-lg leading-none">✏️</span>

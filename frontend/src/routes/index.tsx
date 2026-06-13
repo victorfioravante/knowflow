@@ -9,6 +9,8 @@ import MyDecksPage from '@/pages/creator/MyDecksPage'
 import TemplateGalleryPage from '@/pages/creator/TemplateGalleryPage'
 import HomePage from '@/pages/learner/HomePage'
 import StoryPlayerPage from '@/pages/learner/StoryPlayerPage'
+import TrailsPage from '@/pages/learner/TrailsPage'
+import TrailDetailPage from '@/pages/learner/TrailDetailPage'
 
 function ProtectedLayout() {
   const { status } = useAuth()
@@ -34,6 +36,8 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: '/trails', element: <TrailsPage /> },
+          { path: '/trails/:trailId', element: <TrailDetailPage /> },
           { path: '/decks', element: <MyDecksPage /> },
         ],
       },

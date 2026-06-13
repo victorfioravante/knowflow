@@ -207,6 +207,7 @@ async function main() {
 
   await ensureDemoUser(demoOrg.id)
   await seedDemoDecks(demoOrg.id)
+  await seedDemoTrail(demoOrg.id)
 }
 
 /**
@@ -449,6 +450,45 @@ async function seedDemoDecks(organizationId: string) {
     })
     console.log(`Deck demo criado: ${demo.title}`)
   }
+}
+
+// ─── Trilha de onboarding demo ─────────────────────────────
+
+async function seedDemoTrail(organizationId: string) {
+  const existing = await prisma.trail.findFirst({
+    where: { organizationId, isOnboarding: true },
+  })
+  if (existing) return
+
+  // Sequência de onboarding: processos → produto → segurança
+  const orderedTitles = [
+    'Onboarding: Como Trabalhamos',
+    'Conhecendo Nosso Produto',
+    'NR-10: Segurança em Eletricidade',
+  ]
+  const decks = await prisma.deck.findMany({
+    where: { organizationId, title: { in: orderedTitles } },
+  })
+  if (decks.length === 0) return
+
+  const idByTitle = new Map(decks.map((d) => [d.title, d.id]))
+  const items = orderedTitles
+    .map((title, order) => ({ deckId: idByTitle.get(title), order }))
+    .filter((it): it is { deckId: string; order: number } => Boolean(it.deckId))
+    .map((it) => ({ deckId: it.deckId, order: it.order, required: true }))
+
+  await prisma.trail.create({
+    data: {
+      title: 'Onboarding: Seus Primeiros Dias',
+      description: 'Tudo que você precisa para começar com o pé direito — na ordem certa.',
+      coverColor: '#1D9E75',
+      isOnboarding: true,
+      sequential: true,
+      organizationId,
+      items: { create: items },
+    },
+  })
+  console.log('Trilha demo criada: Onboarding: Seus Primeiros Dias')
 }
 
 main()
