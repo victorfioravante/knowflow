@@ -37,6 +37,7 @@ router.post(
   validate(decks.rejectDeckSchema),
   decks.rejectDeck,
 )
+router.post('/:id/redraft', decks.reDraftDeck)
 router.patch('/:id', validate(decks.updateDeckSchema), decks.updateDeck)
 router.delete('/:id', decks.deleteDeck)
 

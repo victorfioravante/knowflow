@@ -62,6 +62,11 @@ export async function rejectDeck(id: string, note: string) {
   return data
 }
 
+export async function reDraftDeck(id: string) {
+  const { data } = await api.post<Deck>(`/decks/${id}/redraft`)
+  return data
+}
+
 export async function listAssignedDecks() {
   const { data } = await api.get<Deck[]>('/decks/assigned')
   return data

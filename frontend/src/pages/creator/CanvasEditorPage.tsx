@@ -5,7 +5,7 @@ import CanvasEditor from '@/components/canvas/CanvasEditor'
 import DeckStatusBadge from '@/components/deck/DeckStatusBadge'
 import { useAuth } from '@/hooks/useAuth'
 import { useDebouncedCallback } from '@/hooks/useDebouncedCallback'
-import { approveDeck, getDeck, rejectDeck, submitDeck, updateDeck } from '@/services/decks'
+import { approveDeck, getDeck, reDraftDeck, rejectDeck, submitDeck, updateDeck } from '@/services/decks'
 
 export default function CanvasEditorPage() {
   const { deckId } = useParams<{ deckId: string }>()
@@ -58,6 +58,12 @@ export default function CanvasEditorPage() {
     mutationFn: (note: string) => rejectDeck(deckId!, note),
     onSuccess: invalidateDeck,
     onError: () => setActionError('Erro ao rejeitar deck'),
+  })
+
+  const reDraft = useMutation({
+    mutationFn: () => reDraftDeck(deckId!),
+    onSuccess: invalidateDeck,
+    onError: () => setActionError('Erro ao reabrir deck'),
   })
 
   if (isLoading) {
@@ -147,10 +153,47 @@ export default function CanvasEditorPage() {
       {editable ? (
         <CanvasEditor deck={deck} />
       ) : (
-        <p className="px-4 py-10 text-center text-sm text-gray-400">
-          Este deck está {deck.status === 'PENDING' ? 'em aprovação' : 'aprovado'} e não
-          pode ser editado.
-        </p>
+        <div className="mx-4 mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-card">
+          {deck.status === 'PENDING' ? (
+            <>
+              <p className="text-sm font-semibold text-gray-700">Aguardando aprovação</p>
+              <p className="mt-1 text-sm text-gray-400">
+                Este deck está em análise. Você pode visualizá-lo, mas não editá-lo enquanto aguarda revisão.
+              </p>
+              <button
+                onClick={() => navigate(`/decks/${deckId}/play`)}
+                className="mt-4 w-full rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700"
+              >
+                Visualizar deck
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-gray-700">Deck publicado</p>
+              <p className="mt-1 text-sm text-gray-400">
+                Este deck está aprovado e visível para os learners. Para editar o conteúdo, reabra-o como rascunho — ele sairá de circulação até uma nova aprovação.
+              </p>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  onClick={() => navigate(`/decks/${deckId}/play`)}
+                  className="w-full rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700"
+                >
+                  Visualizar deck
+                </button>
+                <button
+                  onClick={() => {
+                    setActionError(null)
+                    reDraft.mutate()
+                  }}
+                  disabled={reDraft.isPending}
+                  className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {reDraft.isPending ? 'Reabrindo...' : 'Reabrir para edição'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   )

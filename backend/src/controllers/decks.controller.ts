@@ -237,6 +237,27 @@ export async function rejectDeck(req: Request, res: Response) {
   res.json(updated)
 }
 
+// POST /api/decks/:id/redraft — reabre deck aprovado para edição (owner ou ADMIN/MANAGER)
+export async function reDraftDeck(req: Request, res: Response) {
+  const deck = await findOrgDeck(req.params.id, req.organization.id)
+  if (!deck) return res.status(404).json({ error: 'Deck não encontrado' })
+
+  const isOwner = deck.createdById === req.user.id
+  const isManager = req.user.role === UserRole.ADMIN || req.user.role === UserRole.MANAGER
+  if (!isOwner && !isManager) return res.status(403).json({ error: 'Permissão insuficiente' })
+
+  if (deck.status !== DeckStatus.APPROVED) {
+    return res.status(400).json({ error: 'Apenas decks aprovados podem ser reabertos' })
+  }
+
+  const updated = await prisma.deck.update({
+    where: { id: deck.id },
+    data: { status: DeckStatus.DRAFT, approvedById: null },
+    include: deckListInclude,
+  })
+  res.json(updated)
+}
+
 // GET /api/decks/assigned — decks aprovados visíveis ao usuário, com progresso
 export async function listAssignedDecks(req: Request, res: Response) {
   const userId = req.user.id
