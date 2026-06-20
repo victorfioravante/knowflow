@@ -4,6 +4,7 @@ import AppShell from '@/components/layout/AppShell'
 import { useAuth } from '@/hooks/useAuth'
 import InvitePage from '@/pages/auth/InvitePage'
 import LoginPage from '@/pages/auth/LoginPage'
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import CanvasEditorPage from '@/pages/creator/CanvasEditorPage'
 import MyDecksPage from '@/pages/creator/MyDecksPage'
 import TemplateGalleryPage from '@/pages/creator/TemplateGalleryPage'
@@ -26,6 +27,7 @@ function ProtectedLayout() {
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/invite', element: <InvitePage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   {
     element: <ProtectedLayout />,
     children: [

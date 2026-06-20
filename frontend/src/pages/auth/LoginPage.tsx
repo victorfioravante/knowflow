@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, ArrowLeftRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
+
+const RESET_REDIRECT = `${window.location.origin}/reset-password`
 
 export default function LoginPage() {
   const { signIn } = useAuth()
@@ -12,6 +15,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Informe o e-mail antes de solicitar a redefinição de senha')
+      return
+    }
+    setError(null)
+    await supabase.auth.resetPasswordForEmail(email, { redirectTo: RESET_REDIRECT })
+    setResetSent(true)
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -97,10 +111,20 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-end">
-            <button type="button" className="text-sm font-medium text-primary">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm font-medium text-primary"
+            >
               Esqueci minha senha
             </button>
           </div>
+
+          {resetSent && (
+            <p className="rounded-lg bg-accent/10 px-3 py-2 text-sm text-accent">
+              Link de redefinição enviado para {email}. Verifique seu e-mail.
+            </p>
+          )}
 
           {error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
